@@ -1,6 +1,7 @@
 import VaccinesIcon from '@mui/icons-material/Vaccines';
 import Settings from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import { BottomNavigation, BottomNavigationAction } from '@mui/material';
 import Container from '@mui/material/Container';
 import produce from 'immer';
@@ -816,6 +817,10 @@ export function SettingsPage() {
   </>;
 }
 
+export function ErrorPage() {
+  return<>Error</>;
+}
+
 export function Vaccines() {
   let { store } = useStore();
   let vaccines = Object.values(store.vaccines);
@@ -907,6 +912,13 @@ function App() {
           to="/health-links"
           icon={<ShareIcon />}
         />
+        <BottomNavigationAction
+          label="Scan"
+          component={NavLink}
+          value="scan-shc"
+          to="/scan"
+          icon={<QrCodeScannerIcon />}
+         />
         <BottomNavigationAction
           label="About"
           component={NavLink}

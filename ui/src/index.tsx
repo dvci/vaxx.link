@@ -1,7 +1,8 @@
 import React from 'react';
 import * as ReactDOMClient from 'react-dom/client';
 import { HashRouter, Route, Routes } from "react-router-dom";
-import App, { SettingsPage, SHLinkCreate, SHLinkCreateCustom, SHLinkDetail, SHLinks, Vaccines } from './App';
+import App, { SettingsPage, SHLinkCreate, SHLinkCreateCustom, SHLinkDetail, SHLinks, Vaccines, ErrorPage } from './App';
+import QrScan from './QrScan';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 
@@ -17,6 +18,8 @@ root.render(
           <Route path="health-links" element={<SHLinks />} />
           <Route path="health-links/:datasetId/:shlinkId" element={<SHLinkDetail />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="scan" element={<QrScan />} />
+          <Route path="error" element={<ErrorPage />} />
         </Route>
       </Routes>
     </HashRouter>

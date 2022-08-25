@@ -1,0 +1,259 @@
+import React, {
+    useState, useRef, useEffect, useCallback
+  } from 'react';
+  import {
+    Button, Grid, Box
+  } from '@mui/material';
+  import { useTheme } from '@mui/material/styles';
+  import { styled } from '@mui/system';
+  import { useNavigate, useLocation } from 'react-router-dom';
+  import { v4 as uuidv4 } from 'uuid';
+  import frame from './assets/frame.png';
+  import QrScanner from 'qr-scanner';
+  import { useErrorHandler } from 'react-error-boundary';
+  
+  
+  let qrScan: QrScanner;
+  
+  const QrScan = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const handleErrorFallback = useErrorHandler();
+    const [scannedCodes, setScannedCodes] = useState<(null | string)[]>([]);
+    const [scannedData, setScannedData] = useState('');
+    const runningQrScanner = useRef<null | QrScanner>(null);
+    const scannedCodesRef = useRef<(null | string)[]>([]);
+
+    const theme = useTheme();
+    const classes = {
+      button: {
+        '&:hover': {
+          cursor: 'default'
+        }
+      },
+      box: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        marginTop: '2em'
+      },
+      grid: {
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'nowrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 'auto',
+        [theme.breakpoints.down('md')]: {
+          maxHeight: '550px',
+          maxWidth: '300px',
+          margin: '1rem'
+        },
+        [theme.breakpoints.up('md')]: {
+          maxHeight: '550px',
+          maxWidth: '650px',
+          margin: '2rem'
+        }
+      },
+      gridContainerMultiple: {
+        display: 'flex',
+        flexDirection: 'row',
+        flexGrow: 1,
+        alignItems: 'right',
+        justifyContent: 'right',
+        paddingBottom: '1rem'
+      },
+      gridItem: {
+        display: 'flex',
+        position: 'relative',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%'
+      },
+      frame: {
+        position: 'relative',
+        [theme.breakpoints.down('md')]: {
+          maxHeight: '550px',
+          maxWidth: '300px'
+        },
+        [theme.breakpoints.up('md')]: {
+          maxHeight: '550px',
+          maxWidth: '650px'
+        },
+        objectFit: 'contain',
+        zIndex: '2'
+      }
+    };
+
+    const StyledImg = styled('img')(({ theme }: any) => ({
+      position: 'relative',
+        [theme.breakpoints.down('md')]: {
+          maxHeight: '550px',
+          maxWidth: '300px'
+        },
+        [theme.breakpoints.up('md')]: {
+          maxHeight: '550px',
+          maxWidth: '650px'
+        },
+        objectFit: 'contain',
+        zIndex: '2'
+    }));
+
+    const StyledVideo = styled('video')(({ theme }: any) => ({
+      objectFit: 'cover',
+        position: 'absolute',
+        width: '90%',
+        height: '90%',
+        zIndex: '1',
+        '& section': {
+          position: 'unset !important',
+          '& div': {
+            boxShadow: 'unset !important'
+          }
+        }
+    }));
+  
+    const handleError = useCallback(() => {
+      navigate('/error');
+    }, [navigate]);
+  
+    useEffect(() => () => {
+      if (runningQrScanner.current) {
+        runningQrScanner.current.stop();
+      }
+    }, [])
+  
+    const videoRef = useRef<null | HTMLVideoElement>(null);
+    // Get user media when the page first renders, and feed into createQrScanner()
+    useEffect(() => {
+      const getUserMedia = async () => {
+        try {
+          if (videoRef.current) {
+            const stream = await navigator.mediaDevices.getUserMedia(
+              { audio: false, video: { facingMode: 'environment' } }
+            );
+            videoRef.current.srcObject = stream;
+          }
+        } catch (err: any) {
+          throw new Error(`Cannot access video: ${err.message}.`);
+        }
+      };
+  
+    /**
+     * Create QrScanner instance using video element and specify result/error conditions
+     * @param {HTMLVideoElement} videoElement HTML video element
+     */
+      const createQrScanner = async (videoElement: any) => {
+        if (!videoElement) {
+          if (runningQrScanner.current) {
+            qrScan.destroy();
+          }
+          return;
+        }
+        qrScan = new QrScanner(
+          videoElement,
+          (results) => {
+            setScannedData(results.data);
+          },
+          {
+            preferredCamera: 'environment',
+            calculateScanRegion: (video) => ({
+            // define scan region for QrScanner
+              x: 0,
+              y: 0,
+              width: video.videoWidth,
+              height: video.videoHeight
+            })
+          }
+        );
+        runningQrScanner.current = qrScan;
+  
+        qrScan.start();
+      };
+  
+      if (!runningQrScanner.current) {
+            getUserMedia().then(async () => {
+              await createQrScanner(videoRef.current);
+            }, handleErrorFallback);
+      }}, [handleErrorFallback, navigate]);
+  
+    useEffect(() => {
+      const healthCardPattern = /^shc:\/(?<multipleChunks>(?<chunkIndex>[0-9]+)\/(?<chunkCount>[0-9]+)\/)?(?<payload>[0-9]+)$/;
+      const parseHealthCardQr = (qrCode: string) => {
+          if (healthCardPattern.test(qrCode)) {
+          const match = qrCode.match(healthCardPattern);
+          return match?.groups;
+          }
+          return null;
+      };
+      const handleScan = (data: string) => {
+        const qrData = parseHealthCardQr(data);
+        if (qrData && qrData.multipleChunks) {
+          const chunkCount = +qrData.chunkCount;
+          const currentChunkIndex = +qrData.chunkIndex;
+          let tempScannedCodes = [...scannedCodesRef.current];
+          if (tempScannedCodes.length !== chunkCount) {
+            tempScannedCodes = new Array(chunkCount);
+            tempScannedCodes.fill(null, 0, chunkCount);
+          }
+  
+          if (tempScannedCodes[currentChunkIndex - 1] === null) {
+            tempScannedCodes[currentChunkIndex - 1] = data;
+          }
+          if (tempScannedCodes.every((code) => code)) {
+            localStorage.setItem('qrCodes', JSON.stringify([tempScannedCodes]));
+          }
+          setScannedCodes(tempScannedCodes);
+          scannedCodesRef.current = tempScannedCodes;
+        } else {
+          localStorage.setItem('qrCodes', JSON.stringify([data]));
+        }
+      }
+  
+      if (scannedData) {
+        try {
+          handleScan(scannedData);
+        } catch (e) {
+          handleError();
+        }
+      }
+  
+      return () => {
+        setScannedData('');
+      }
+    }, [scannedData, handleError, navigate, location]);
+  
+    return (
+      <Box sx={classes.box}>
+        <Grid container sx={classes.grid}>
+          <Grid container item flexWrap="nowrap" width="100%" height="100%">
+            {scannedCodes.length > 0 && (
+            <Grid container item sx={classes.gridContainerMultiple}>
+              {scannedCodes.map((code, i) => (
+                <Button
+                  sx={classes.button}
+                  key={code || uuidv4()}
+                  variant="contained"
+                  color={code ? 'success' : 'error'}
+                  disableRipple
+                  style={{ marginRight: '0.5rem' }}
+                >
+                  {`${i + 1}/${scannedCodes.length}`}
+                </Button>
+              ))}
+            </Grid>
+            )}
+          </Grid>
+          <Grid item sx={classes.gridItem}>
+            <StyledVideo muted id="test" ref={videoRef} />
+            <StyledImg alt="Scan Frame" src={frame} />
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  };
+  
+  export default QrScan;
+  
