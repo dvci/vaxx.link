@@ -3,14 +3,14 @@ import React, { createContext, useContext, useReducer } from 'react';
 interface State {
     qrCodes?: null | string | string[],
     jws?: null | string[],
-    setQrCodes?: any,
-    resetQrCodes?: any
+    setQrCodes: (arg: any) => any;
+    resetQrCodes: () => any;
 }
 
 const initialState: State = {
-  qrCodes: [],
-  setQrCodes: null,
-  resetQrCodes: null,
+  qrCodes: '',
+  setQrCodes: () =>{ return},
+  resetQrCodes: () => {return},
   jws: null
 };
 
@@ -33,7 +33,7 @@ const getJws = (qrCodes: string[]) => qrCodes
 const reducer = (state: any, action: any) => {
   switch (action.type) {
     case actions.SET_QR_CODES: {
-      const newState: State = {};
+      let newState: State = initialState;
       localStorage.setItem('qrCodes', JSON.stringify(action.qrCodes));
 
       if (action.qrCodes) {

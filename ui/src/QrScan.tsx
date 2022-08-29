@@ -197,14 +197,14 @@ import React, {
           if (tempScannedCodes.every((code) => code)) {
             resetQrCodes();
             setQrCodes([tempScannedCodes]);
-            navigate('/display-results');
+            navigate('/health-links');
           }
           setScannedCodes(tempScannedCodes);
           scannedCodesRef.current = tempScannedCodes;
         } else {
-          resetQrCodes();
+          resetQrCodes();      
           setQrCodes([data]);
-          navigate('/display-results');
+          navigate('/health-links');
         }
       }
   

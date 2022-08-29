@@ -8,6 +8,7 @@ import produce from 'immer';
 import QRCode from 'qrcode';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import { useQrDataContext } from './QrDataProvider';
 import * as jose from 'jose';
 
 import {
