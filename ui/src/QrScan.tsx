@@ -9,6 +9,7 @@ import React, {
   import { useNavigate, useLocation } from 'react-router-dom';
   import { v4 as uuidv4 } from 'uuid';
   import frame from './assets/frame.png';
+  import { useQrDataContext } from './QrDataProvider';
   import QrScanner from 'qr-scanner';
   import { useErrorHandler } from 'react-error-boundary';
   
@@ -19,6 +20,9 @@ import React, {
     const navigate = useNavigate();
     const location = useLocation();
     const handleErrorFallback = useErrorHandler();
+    const {
+      setQrCodes, resetQrCodes, qrCodes
+    } = useQrDataContext();
     const [scannedCodes, setScannedCodes] = useState<(null | string)[]>([]);
     const [scannedData, setScannedData] = useState('');
     const runningQrScanner = useRef<null | QrScanner>(null);
@@ -71,8 +75,10 @@ import React, {
         justifyContent: 'center',
         width: '100%',
         height: '100%'
-      },
-      frame: {
+      }
+    };
+
+    const StyledImg = styled('img')({
         position: 'relative',
         [theme.breakpoints.down('md')]: {
           maxHeight: '550px',
@@ -84,25 +90,10 @@ import React, {
         },
         objectFit: 'contain',
         zIndex: '2'
-      }
-    };
+    });
 
-    const StyledImg = styled('img')(({ theme }: any) => ({
-      position: 'relative',
-        [theme.breakpoints.down('md')]: {
-          maxHeight: '550px',
-          maxWidth: '300px'
-        },
-        [theme.breakpoints.up('md')]: {
-          maxHeight: '550px',
-          maxWidth: '650px'
-        },
-        objectFit: 'contain',
-        zIndex: '2'
-    }));
-
-    const StyledVideo = styled('video')(({ theme }: any) => ({
-      objectFit: 'cover',
+    const StyledVideo = styled('video')({
+        objectFit: 'cover',
         position: 'absolute',
         width: '90%',
         height: '90%',
@@ -113,8 +104,9 @@ import React, {
             boxShadow: 'unset !important'
           }
         }
-    }));
+    });
   
+
     const handleError = useCallback(() => {
       navigate('/error');
     }, [navigate]);
@@ -141,7 +133,7 @@ import React, {
         }
       };
   
-    /**
+      /**
      * Create QrScanner instance using video element and specify result/error conditions
      * @param {HTMLVideoElement} videoElement HTML video element
      */
@@ -180,14 +172,14 @@ import React, {
       }}, [handleErrorFallback, navigate]);
   
     useEffect(() => {
-      const healthCardPattern = /^shc:\/(?<multipleChunks>(?<chunkIndex>[0-9]+)\/(?<chunkCount>[0-9]+)\/)?(?<payload>[0-9]+)$/;
-      const parseHealthCardQr = (qrCode: string) => {
-          if (healthCardPattern.test(qrCode)) {
-          const match = qrCode.match(healthCardPattern);
-          return match?.groups;
-          }
-          return null;
-      };
+        const healthCardPattern = /^shc:\/(?<multipleChunks>(?<chunkIndex>[0-9]+)\/(?<chunkCount>[0-9]+)\/)?(?<payload>[0-9]+)$/;
+        const parseHealthCardQr = (qrCode: string) => {
+            if (healthCardPattern.test(qrCode)) {
+            const match = qrCode.match(healthCardPattern);
+            return match?.groups;
+            }
+            return null;
+        };
       const handleScan = (data: string) => {
         const qrData = parseHealthCardQr(data);
         if (qrData && qrData.multipleChunks) {
@@ -203,12 +195,16 @@ import React, {
             tempScannedCodes[currentChunkIndex - 1] = data;
           }
           if (tempScannedCodes.every((code) => code)) {
-            localStorage.setItem('qrCodes', JSON.stringify([tempScannedCodes]));
+            resetQrCodes();
+            setQrCodes([tempScannedCodes]);
+            navigate('/display-results');
           }
           setScannedCodes(tempScannedCodes);
           scannedCodesRef.current = tempScannedCodes;
         } else {
-          localStorage.setItem('qrCodes', JSON.stringify([data]));
+          resetQrCodes();
+          setQrCodes([data]);
+          navigate('/display-results');
         }
       }
   
@@ -223,7 +219,7 @@ import React, {
       return () => {
         setScannedData('');
       }
-    }, [scannedData, handleError, navigate, location]);
+    }, [scannedData, handleError, navigate, location, setQrCodes, resetQrCodes, qrCodes]);
   
     return (
       <Box sx={classes.box}>
