@@ -105,6 +105,16 @@ import React, {
           }
         }
     });
+
+    const confirmSHLCreation = () => {
+      let confirmed;
+      if (window.confirm("SMART Health Card successfully scanned. Create new dataset?") === true) {
+          confirmed = true;
+        } else {
+          confirmed = false;
+        }
+      return confirmed;
+    }
   
 
     const handleError = useCallback(() => {
@@ -172,14 +182,14 @@ import React, {
       }}, [handleErrorFallback, navigate]);
   
     useEffect(() => {
-        const healthCardPattern = /^shc:\/(?<multipleChunks>(?<chunkIndex>[0-9]+)\/(?<chunkCount>[0-9]+)\/)?(?<payload>[0-9]+)$/;
-        const parseHealthCardQr = (qrCode: string) => {
-            if (healthCardPattern.test(qrCode)) {
-            const match = qrCode.match(healthCardPattern);
-            return match?.groups;
-            }
-            return null;
-        };
+      const healthCardPattern = /^shc:\/(?<multipleChunks>(?<chunkIndex>[0-9]+)\/(?<chunkCount>[0-9]+)\/)?(?<payload>[0-9]+)$/;
+      const parseHealthCardQr = (qrCode: string) => {
+          if (healthCardPattern.test(qrCode)) {
+          const match = qrCode.match(healthCardPattern);
+          return match?.groups;
+          }
+          return null;
+      };
       const handleScan = (data: string) => {
         const qrData = parseHealthCardQr(data);
         if (qrData && qrData.multipleChunks) {
@@ -196,17 +206,24 @@ import React, {
           }
           if (tempScannedCodes.every((code) => code)) {
             resetQrCodes();
-            setQrCodes([tempScannedCodes]);
-            navigate('/health-links');
-          }
+            setQrCodes(tempScannedCodes);
+            if (confirmSHLCreation() === true) {
+              navigate('/health-links');
+            } else {
+              navigate('/');
+            }
           setScannedCodes(tempScannedCodes);
           scannedCodesRef.current = tempScannedCodes;
         } else {
           resetQrCodes();      
-          setQrCodes([data]);
-          navigate('/health-links');
+          setQrCodes(data);
+          if (confirmSHLCreation() === true) {
+            navigate('/health-links');
+          } else {
+            navigate('/');
+          }
         }
-      }
+      }};
   
       if (scannedData) {
         try {
@@ -243,7 +260,7 @@ import React, {
             )}
           </Grid>
           <Grid item sx={classes.gridItem}>
-            <StyledVideo muted id="test" ref={videoRef} />
+            <StyledVideo muted id="styled-video" ref={videoRef} />
             <StyledImg alt="Scan Frame" src={frame} />
           </Grid>
         </Grid>

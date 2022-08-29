@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useReducer } from 'react';
 
 interface State {
-    qrCodes?: null | string | string[],
-    jws?: null | string[],
+    qrCodes?: null | string,
+    jws?: null | string,
     setQrCodes: (arg: any) => any;
     resetQrCodes: () => any;
 }
@@ -21,14 +21,12 @@ const actions = {
 
 const QrDataContext = createContext<State>(initialState);
 
-const getJws = (qrCodes: string[]) => qrCodes
-  .map((c) => {
-    const sliceIndex = c.lastIndexOf('/');
-    const rawPayload = c.slice(sliceIndex + 1);
+const getJws = (qrCodes: string) => {
+    const sliceIndex = qrCodes.lastIndexOf('/');
+    const rawPayload = qrCodes.slice(sliceIndex + 1);
     const encodingChars = rawPayload.match(/\d\d/g);
     return encodingChars?.map((charPair) => String.fromCharCode(+charPair + 45)).join('');
-  })
-  .join('');
+}
 
 const reducer = (state: any, action: any) => {
   switch (action.type) {
@@ -38,11 +36,9 @@ const reducer = (state: any, action: any) => {
 
       if (action.qrCodes) {
         newState.qrCodes = action.qrCodes;
-        newState.jws = [];
-        action.qrCodes.forEach((c: string | string[]) => {
-        const jws = getJws(c instanceof Array ? c : [c]);
-        newState.jws?.push(jws);
-        });
+        newState.jws = '';
+        const jws = getJws(action.qrCodes);
+        newState.jws = jws;
       } else newState.jws = null;
       return {
         ...state,
@@ -72,7 +68,7 @@ const QrDataProvider = ({ children }: any) => {
     jws: state.jws,
     validationStatus: state.validationStatus,
     matchingDemographicData: state.matchingDemographicData,
-    setQrCodes: (qrCodes: string[]) => {
+    setQrCodes: (qrCodes: string) => {
       dispatch({ type: actions.SET_QR_CODES, qrCodes });
     },
     resetQrCodes: () => {

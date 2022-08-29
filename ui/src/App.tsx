@@ -27,6 +27,7 @@ import cvxConst from './fixtures/cvx.json';
 
 const cvx: Record<string, string> = cvxConst;
 
+
 interface StoredSHC {
   id: number;
   jws: string;
@@ -604,10 +605,25 @@ export function SHLinks() {
   let [qrDisplay, setQrDisplay] = useState({} as Record<string | number, boolean> | null);
   let [qrData, setQrData] = useState({} as Record<number, string> | null);
   let [accessLogDisplay, setAccessLogDisplay] = useState({} as Record<number, boolean>);
+  const { jws } = useQrDataContext();
 
   let allLinks = Object.values(store.sharing)
     .flatMap((r) => Object.values(r.shlinks))
     .map((l) => ({ id: l.id, link: generateLinkUrl(l) }));
+
+  useEffect(() => {
+    if (jws) {
+      const context = new shdc.Context();
+      context.compact = jws;
+      const payload = (shdc.low.decode.jws.compact(context)).jws.payload;
+      const shc: StoredSHC =  {
+        id: idGenerator(),
+        jws,
+        payload,
+      };
+      dispatch({ type: 'vaccine-add', vaccine: shc });
+    }
+  }, [jws]);
 
   useDeepCompareEffect(() => {
     Promise.all(
@@ -819,7 +835,7 @@ export function SettingsPage() {
 }
 
 export function ErrorPage() {
-  return<>Error</>;
+  return<>An Error has occurred.</>;
 }
 
 export function Vaccines() {
