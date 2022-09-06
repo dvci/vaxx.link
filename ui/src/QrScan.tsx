@@ -200,7 +200,7 @@ import React, {
             tempScannedCodes = new Array(chunkCount);
             tempScannedCodes.fill(null, 0, chunkCount);
           }
-  
+
           if (tempScannedCodes[currentChunkIndex - 1] === null) {
             tempScannedCodes[currentChunkIndex - 1] = data;
           }
@@ -212,9 +212,11 @@ import React, {
             } else {
               navigate('/');
             }
+          }
           setScannedCodes(tempScannedCodes);
           scannedCodesRef.current = tempScannedCodes;
         } else {
+          console.log('made it to the else');
           resetQrCodes();      
           setQrCodes(data);
           if (confirmSHLCreation() === true) {
@@ -223,7 +225,7 @@ import React, {
             navigate('/');
           }
         }
-      }};
+      };
   
       if (scannedData) {
         try {

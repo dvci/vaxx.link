@@ -612,6 +612,7 @@ export function SHLinks() {
     .map((l) => ({ id: l.id, link: generateLinkUrl(l) }));
 
   useEffect(() => {
+    console.log(jws);
     if (jws) {
       const context = new shdc.Context();
       context.compact = jws;
@@ -622,8 +623,17 @@ export function SHLinks() {
         payload,
       };
       dispatch({ type: 'vaccine-add', vaccine: shc });
-    }
-  }, [jws]);
+
+      const dsId = idGenerator();
+      const shcDataSet : DataSet = {
+        id: dsId,
+        name: `Scanned Dataset ${dsId}`,
+        shcs: [shc.id],
+        shlinks: {}
+      };
+      dispatch({ type: 'dataset-add', ds: shcDataSet });
+      }
+  }, [dispatch, jws]);
 
   useDeepCompareEffect(() => {
     Promise.all(

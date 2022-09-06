@@ -55,11 +55,12 @@ const reducer = (state: any, action: any) => {
 };
 
 const QrDataProvider = ({ children }: any) => {
+  const qrCodeContent = localStorage.getItem('qrCodes');
   const [state, dispatch] = useReducer(
     reducer,
     reducer(initialState, {
       type: actions.SET_QR_CODES,
-      qrCodes: JSON.parse(localStorage.getItem('qrCodes') || '')
+      qrCodes: qrCodeContent || ''
     })
   );
 
